@@ -10,6 +10,8 @@ const User = require("./models/user");
 const Cart = require("./models/cart");
 const CartItem = require("./models/cart-item");
 const app = express();
+const Order = require("./models/order");
+const OrderItem = require("./models/order-items");
 
 app.set("view engine", "ejs");
 app.set("views", "views");
@@ -46,11 +48,15 @@ Cart.belongsTo(User);
 // Many to many relationship between Cart & Product through CartItem
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
+Order.belongsTo(User);
+// One to many relationship between Order & Product through OrderItem
+Order.belongsToMany(Product, { through: OrderItem });
+User.hasMany(Order);
 
 // Syncs models to the DB by creating the appropriate tables and relations
 sequelize
-  //.sync({ force: true }) //* use { force: true } to drop and recreate tables on every server start
-  .sync() //* use this for normal sync without dropping tables
+  //.sync({ force: true }) //? use { force: true } to drop and recreate tables on every server start
+  .sync() //? use this for normal sync without dropping tables
   .then((result) => {
     return User.findByPk(1);
   })
