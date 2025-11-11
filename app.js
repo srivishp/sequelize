@@ -7,7 +7,8 @@ const errorController = require("./controllers/error");
 const sequelize = require("./util/database");
 const Product = require("./models/product");
 const User = require("./models/user");
-
+const Cart = require("./models/cart");
+const CartItem = require("./models/cart-item");
 const app = express();
 
 app.set("view engine", "ejs");
@@ -35,15 +36,21 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-// Associations/Relations between models
+//# Associations/Relations between models using Sequelize
 // SQL concepts, check Sequelize docs for more info
-// Adding one to may relationships between Shop, Order, Item & User
+// Adding one to many relationships between Shop, Order, Item & User
 Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
 User.hasMany(Product);
+User.hasOne(Cart);
+Cart.belongsTo(User);
+// Many to many relationship between Cart & Product through CartItem
+Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem });
 
 // Syncs models to the DB by creating the appropriate tables and relations
 sequelize
-  .sync({ force: true }) //* use { force: true } to drop and recreate tables on every server start
+  //.sync({ force: true }) //* use { force: true } to drop and recreate tables on every server start
+  .sync() //* use this for normal sync without dropping tables
   .then((result) => {
     return User.findByPk(1);
   })
@@ -55,7 +62,12 @@ sequelize
   })
   .then((user) => {
     //console.log(user);
-    app.listen(3000);
+
+    user.createCart();
+  })
+  .then((cart) => {
+    // change port number as per requirement
+    app.listen(4000);
   })
   .catch((err) => {
     console.log(err);
